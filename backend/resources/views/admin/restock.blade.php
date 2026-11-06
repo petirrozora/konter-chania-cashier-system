@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('content')
+<div class="page-head"><div><span class="eyebrow">WAWASAN</span><h1>Rekomendasi Restock</h1><p>Urutan tindakan berdasarkan estimasi kebutuhan dan kondisi stok.</p></div><button class="btn btn-primary" id="copy-restock">Salin daftar belanja</button></div>
+<div class="notice info"><strong>Cara hitung:</strong> estimasi kebutuhan + safety stock − stok saat ini. Formula final dapat disesuaikan dengan metodologi penelitian.</div>
+<section class="panel table-wrap"><table><thead><tr><th></th><th>Produk</th><th class="num">Stok</th><th class="num">Estimasi</th><th class="num">Safety stock</th><th class="num">Rekomendasi</th><th>Status</th></tr></thead><tbody>@foreach($recommendations as $r)<tr><td><input type="checkbox" class="restock-check" value="{{$r->id}}"></td><td><strong>{{$r->product->name}}</strong></td><td class="num">{{$r->current_stock}}</td><td class="num estimate-number">{{number_format($r->predicted_demand,1)}}</td><td class="num">{{$r->safety_stock}}</td><td class="num"><strong>{{$r->recommended_quantity}}</strong> {{$r->product->unit}}</td><td><span class="status {{$r->status==='Perlu Restock'?'danger':($r->status==='Pantau'?'warning':'success')}}">{{$r->status==='Perlu Restock'?'▲':'●'}} {{$r->status}}</span></td></tr>@endforeach</tbody></table></section>
+@endsection

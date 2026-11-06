@@ -1,0 +1,3 @@
+<?php
+use Illuminate\Database\Migrations\Migration;use Illuminate\Database\Schema\Blueprint;use Illuminate\Support\Facades\Schema;
+return new class extends Migration{public function up(){Schema::create('restock_recommendations',function(Blueprint $t){$t->id();$t->foreignId('product_id')->constrained()->cascadeOnDelete();$t->integer('current_stock');$t->decimal('predicted_demand',12,2);$t->decimal('safety_stock',12,2);$t->decimal('recommended_quantity',12,2);$t->enum('status',['Perlu Restock','Pantau','Aman']);$t->timestamps();});}public function down(){Schema::dropIfExists('restock_recommendations');}};

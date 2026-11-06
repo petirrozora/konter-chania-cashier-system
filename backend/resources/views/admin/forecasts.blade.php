@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('content')
+<div class="page-head"><div><span class="eyebrow">WAWASAN</span><h1>Prediksi</h1><p>Estimasi adalah informasi pendukung keputusan, bukan jaminan penjualan.</p></div><div class="head-actions"><a class="btn btn-secondary" href="{{route('admin.forecasts.import')}}">Impor Data</a><form method="POST" action="{{route('admin.forecasts.run')}}" class="inline-form">@csrf<input name="horizon" type="number" min="1" max="90" value="7" title="Horizon hari"><button class="btn btn-primary">Jalankan estimasi</button></form></div></div>
+<div class="notice info"><strong>Metode:</strong> Baseline Moving Average 30 Hari pada implementasi awal. Metode final tetap dapat diganti sesuai hasil penelitian dan persetujuan pembimbing.</div>
+<section class="panel table-wrap"><table><thead><tr><th>Produk</th><th>Periode</th><th class="num">Estimasi</th><th>Metode</th><th>Evaluasi</th></tr></thead><tbody>@foreach($forecasts as $f)<tr><td>{{$f->product->name}}</td><td>{{$f->forecast_period->format('d M Y')}}</td><td class="num">{{number_format($f->predicted_quantity,2)}} {{$f->product->unit}}</td><td><span class="estimate-tag">Estimasi · {{$f->method}}</span></td><td>@if($f->error_value!==null){{$f->error_value}}@else—@endif</td></tr>@endforeach</tbody></table></section><div class="pagination">{{$forecasts->links()}}</div>
+@endsection

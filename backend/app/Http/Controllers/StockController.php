@@ -1,0 +1,13 @@
+<?php
+namespace App\Http\Controllers;
+use App\Models\{Product,Stock,StockMovement};
+use App\Services\ActivityLogger;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+class StockController extends Controller {
+ public function index(Request $r){$status=$r->get('status','Menipis');$products=Product::with(['category','stock'])->where('status','active')->when($status!=='Semua',function($q)use($status){$q->whereHas('stock',function($s)use($status){if($status==='Habis')$s->where('quantity','<=',0);elseif($status==='Menipis')$s->whereColumn('quantity','<=','minimum_stock')->where('quantity','>',0);else $s->whereColumn('quantity','>','minimum_stock');});})->orderBy('name')->paginate(15)->withQueryString();return view('admin.stocks',compact('products','status'));}
+ public function stockIn(Request $r,Product $product){$d=$r->validate(['quantity'=>'required|integer|min:1','reason'=>'nullable|max:255']);DB::transaction(function()use($product,$d){$s=$product->stock()->lockForUpdate()->first();$before=$s->quantity;$s->increment('quantity',$d['quantity']);$s->refresh();StockMovement::create(['product_id'=>$product->id,'user_id'=>auth()->id(),'type'=>'in','quantity'=>$d['quantity'],'reason'=>$d['reason']??'Barang masuk','before_quantity'=>$before,'after_quantity'=>$s->quantity]);ActivityLogger::log('stock_in',"Barang masuk {$product->name}",['quantity'=>$before],['quantity'=>$s->quantity]);});return back()->with('success','Barang masuk berhasil dicatat.');}
+ public function stockOut(Request $r,Product $product){$d=$r->validate(['quantity'=>'required|integer|min:1','reason'=>'required|in:Rusak,Hilang,Retur,Lainnya']);DB::transaction(function()use($product,$d){$s=$product->stock()->lockForUpdate()->first();if($d['quantity']>$s->quantity)throw \Illuminate\Validation\ValidationException::withMessages(['quantity'=>"Stok tidak cukup. Stok tersedia {$s->quantity} pcs."]);$before=$s->quantity;$s->decrement('quantity',$d['quantity']);$s->refresh();StockMovement::create(['product_id'=>$product->id,'user_id'=>auth()->id(),'type'=>'out','quantity'=>$d['quantity'],'reason'=>$d['reason'],'before_quantity'=>$before,'after_quantity'=>$s->quantity]);ActivityLogger::log('stock_out',"Barang keluar {$product->name}",['quantity'=>$before],['quantity'=>$s->quantity]);});return back()->with('success','Barang keluar berhasil dicatat.');}
+ public function movements(){return view('admin.stock-movements',['movements'=>StockMovement::with(['product','user'])->latest()->paginate(20)]);}
+ public function employeeStocks(){return view('employee.stocks',['products'=>Product::with(['category','stock'])->where('status','active')->orderBy('name')->paginate(20)]);}
+}
